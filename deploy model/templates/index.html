@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kmean</title>
+
+    <style>
+        body {
+        background: rgb(15 19 22);
+        padding: 1rem;
+        } 
+
+        #myRange{
+        width: 500px;
+        clear: both;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+        font-size: 1rem;
+        margin-top: 10px;
+        }
+
+        canvas {
+        width: 500px;
+        height: 500px;
+        margin: 0 1rem 0 0;
+        border-radius: 10px;
+        background-color: aliceblue;
+        padding-left: 0;
+        padding-right: 0;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+        clear: both;
+        }
+
+        button {
+        background: linear-gradient(45deg, #ff6d1b, #e0417f);
+        font-size: 1.25rem;
+        clear: both;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+        font-size: 1.25rem;
+        padding: 1rem 1.5rem;
+        margin-top: 15px;
+        transition: all 0.15s ease-out;
+        cursor: pointer;
+        border-radius: 100px;
+        border: none;
+        color: white;
+        font-family: Inter, sans-serif;
+        filter: drop-shadow(0 15px 15px rgba(0, 0, 0, 0.3));
+        font-variation-settings: 'wght' 600;
+        perspective-origin: 0 0;
+        letter-spacing: 0;
+        width: 200px;
+        }
+
+        button:hover {
+        transform: scale(1.04);
+        } 
+
+        #submit{
+        background: linear-gradient(45deg, #ff6d1b, #e0417f);
+        font-size: 1.25rem;
+        clear: both;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+        font-size: 1.25rem;
+        padding: 1rem 1.5rem;
+        margin-top: 20px;
+        transition: all 0.15s ease-out;
+        cursor: pointer;
+        border-radius: 100px;
+        border: none;
+        color: white;
+        font-family: Inter, sans-serif;
+        filter: drop-shadow(0 15px 15px rgba(0, 0, 0, 0.3));
+        font-variation-settings: 'wght' 600;
+        perspective-origin: 0 0;
+        letter-spacing: 0;
+        width: 200px;
+        }
+
+
+        #submit:hover {
+        transform: scale(1.04);
+        }
+
+        input[type=text]{
+        width: 500px;
+        clear: both;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+        font-size: 1rem;
+        margin-top: 10px;
+        height: 40px;
+        border-radius: 100px;
+        padding-left: 20px;
+        }
+
+        label{
+        margin-top: 10px;
+        margin-bottom: -15px;
+        text-align: center;
+        color: aliceblue;
+        clear: both;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+        }
+    </style>
+
+</head>
+<!-- onload="flashMessage()" -->
+<body onload="flashMessage()">
+    <canvas width="500" height="500" style="border: solid 2px black;"></canvas>
+
+   <form method="POST" action="/predict">
+    <label>X Points Value</label><br>
+    <input type="text" name="x" id="x_id"><br><br>
+
+    <label>Y Points Value</label><br>
+    <input type="text" name="y" id="y_id"><br><br>
+
+    <label>Labels Value</label><br>
+    <input type="text" name="l" id="l_id"><br><br>
+
+    <label id="cluster_id">Set Cluster Value : 2</label><br>
+      <div class="slidecontainer">
+        <input type="range" min="1" max="12" value="2" class="slider" id="myRange" name="kval" oninput="sliderChange(this.value)"> 
+      </div>
+
+    <input id="submit" type="submit" name="answer"><br><br>
+   </form>
+   <button onclick="Rendom_data()">Rendom Data</button>
+   <button onclick="clear_button()">Reset</button>
+
+
+
+    <!-- javascript start -->
+   <script>
+    
+    
+    //define colors
+    let canvasElem = document.querySelector("canvas");
+    let kval = 2;
+
+    var ctx = canvasElem.getContext("2d");
+
+    let point_x = []
+    let point_y = []
+
+    let colors = ['#ff0000','#00ff00','#0000ff','#ff00ff','#00ffff','#f0f0f0','0f0f0f','#2fb6c','#e25eb4','#ffcc55','#aabb88','#5566cc'];
+
+    function flashMessage() {
+        if ("{{ flash_message }}" == "True") {
+        fill_labels("{{point_x}}","{{point_y}}","{{result}}","{{kval}}");
+        }
+    }
+
+    function Rendom_data(){
+        clear_button();
+        for(let i=0;i<50;i++){
+            dx = parseInt(Math.random()*490);
+            dy = parseInt(Math.random()*490);
+            point_x.push(dx)
+            point_y.push(dy)
+            draw_circle(dx,dy,5,'#000000');
+        }
+        document.getElementById("x_id").value = "";
+        document.getElementById("y_id").value = "";
+        document.getElementById("x_id").value = String(point_x);
+        document.getElementById("y_id").value = String(point_y);
+    }
+
+    function draw_circle(x, y, r, color) {
+        ctx.beginPath();
+        ctx.arc(x,y, r, 0, 2 * Math.PI);
+        ctx.fillStyle = color;
+        ctx.fill();
+    }
+
+    function getMousePosition(canvas, event) {
+        let rect = canvas.getBoundingClientRect();
+        let x =  event.clientX - rect.left;
+        x = parseInt(x);
+        let y = event.clientY - rect.top;
+        y = parseInt(y);
+        draw_circle(x,y,5,'#000000');
+        point_x.push(x);
+        point_y.push(y);
+        document.getElementById("x_id").value = "";
+        document.getElementById("y_id").value = "";
+        document.getElementById("x_id").value = String(point_x);
+        document.getElementById("y_id").value = String(point_y);
+    }
+
+    canvasElem.addEventListener("mousedown", function(e)
+    {
+        getMousePosition(canvasElem, e);
+    });
+
+    function fill_labels(text_x,text_y,text_l){
+        const arr_x = text_x.split(",");
+        const arr_y = text_y.split(",");
+        const arr_l = text_l.split(",");
+        arr_l.pop();
+        //parseInt()
+
+        for(let i=0;i<arr_l.length;i++){
+            draw_circle(parseInt(arr_x[i]),parseInt(arr_y[i]),5,colors[parseInt(arr_l[i])]);
+        }
+        document.getElementById("x_id").value = String(arr_x);
+        document.getElementById("y_id").value = String(arr_y);
+        document.getElementById("l_id").value = String(arr_l);
+    }
+
+    function clear_button(){
+        console.log("clear button press");
+        point_x = [];
+        point_y = [];
+        document.getElementById("x_id").value = "";
+        document.getElementById("y_id").value = "";
+        document.getElementById("l_id").value = "";
+        ctx.beginPath();
+        ctx.rect(0,0,500,500);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+    }
+
+    function sliderChange(val) {
+    document.getElementById('cluster_id').innerHTML= "Set Cluster Value : " + val;
+    kval = val;
+    // console.log(val);
+    }
+   </script> 
+
+</body>
+</html>
